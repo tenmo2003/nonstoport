@@ -1,6 +1,3 @@
-// Argument handling: decides what the wrapper does with its argv and builds
-// the argument list passed to nport (always with a fixed subdomain).
-
 import { randomInt } from 'node:crypto';
 
 const SUBDOMAIN_PREFIX = 'nsp-';
@@ -9,7 +6,6 @@ const SUBDOMAIN_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
 const SUBDOMAIN_FLAGS = ['-s', '--subdomain'];
 const LANGUAGE_FLAGS = ['-l', '--lang', '--language'];
 
-/** Generates a DNS-safe subdomain such as `nsp-k3x9a0bq`. */
 export function generateSubdomain() {
   let suffix = '';
   for (let i = 0; i < SUBDOMAIN_RANDOM_LENGTH; i++) {
@@ -18,7 +14,6 @@ export function generateSubdomain() {
   return SUBDOMAIN_PREFIX + suffix;
 }
 
-/** True when argv ends with `-s` / `--subdomain` that has no value. */
 function hasDanglingSubdomainFlag(argv) {
   return SUBDOMAIN_FLAGS.includes(argv.at(-1));
 }
@@ -34,10 +29,6 @@ export function hasSubdomain(argv) {
   });
 }
 
-/**
- * Returns the args for nport: the user's args unchanged, plus `-s <subdomain>`
- * when the user did not pick one.
- */
 export function buildNportArgs(argv, subdomain) {
   if (hasSubdomain(argv)) return [...argv];
   // A trailing value-less `-s` only needs its value, otherwise nport would read "-s" as the name.

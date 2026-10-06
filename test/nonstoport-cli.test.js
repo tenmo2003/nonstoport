@@ -1,4 +1,3 @@
-// End-to-end tests: run bin/nonstoport.js as a real process against the fake nport.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
@@ -71,7 +70,6 @@ for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
 
 test('Ctrl+C (SIGINT to the whole process group) reaches nport exactly once', async () => {
   const logFile = newLogFile();
-  // Own process group for the wrapper, so the group can be signalled like a terminal does.
   const { child, exited } = startWrapper(
     ['3000'],
     { FAKE_NPORT_LOG: logFile, FAKE_NPORT_PLAN: 'hang' },
@@ -80,6 +78,5 @@ test('Ctrl+C (SIGINT to the whole process group) reaches nport exactly once', as
   await waitFor(() => readEvents(logFile, 'start').length === 1);
   process.kill(-child.pid, 'SIGINT');
   assert.deepEqual(await exited, [0, null]);
-  // A second SIGINT would kill the fake nport before it records its cleanup.
   assert.deepEqual(readEvents(logFile).map((entry) => entry.event), ['start', 'cleanup']);
 });

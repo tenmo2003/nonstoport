@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// nonstoport: runs nport and restarts it on the same URL whenever it exits.
 
 import { readFileSync } from 'node:fs';
 import { parseCli } from '../src/nport-args.js';

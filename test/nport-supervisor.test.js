@@ -17,7 +17,6 @@ beforeEach(() => {
   logs = [];
 });
 
-/** Wraps a fast backoff so the test can see the delays that were requested. */
 function recordingBackoff() {
   const inner = createBackoff({ baseMs: 5, maxMs: 40 });
   const calls = [];

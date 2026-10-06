@@ -1,5 +1,3 @@
-// Supervisor loop: keeps one nport child alive, restarting it whenever it exits.
-
 import { spawn } from 'node:child_process';
 import { createBackoff } from './exponential-backoff.js';
 
@@ -20,7 +18,6 @@ export class NportSpawnError extends Error {
   }
 }
 
-/** Writes a wrapper log line to stderr: `[nonstoport] <ISO time> <message>`. */
 export function logToStderr(message) {
   process.stderr.write(`[nonstoport] ${new Date().toISOString()} ${message}\n`);
 }
@@ -29,8 +26,6 @@ export function logToStderr(message) {
  * Runs nport once with inherited stdio.
  * Resolves with `{ code, signal }` on exit, rejects with NportSpawnError if it cannot start.
  * `onChild` receives the child process so the caller can forward signals to it.
- * `detached` puts the child in its own session, out of reach of the terminal's Ctrl+C and
- * hangup; only use it when the caller forwards stop signals itself.
  */
 export function runNport(bin, args, onChild = () => {}, { detached = false } = {}) {
   return new Promise((resolve, reject) => {
@@ -73,7 +68,6 @@ export async function superviseNport({
     child?.kill(signal);
     cancelWait?.();
   };
-  // Cancellable sleep: resolves early when a stop signal arrives.
   const wait = (ms) =>
     new Promise((resolve) => {
       const timer = setTimeout(resolve, ms);
