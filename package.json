@@ -1,0 +1,20 @@
+{
+  "name": "nonstoport",
+  "version": "0.1.0",
+  "description": "Wrapper around the nport CLI that restarts the tunnel on the same URL whenever it expires or crashes",
+  "type": "module",
+  "bin": {
+    "nonstoport": "bin/nonstoport.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}
