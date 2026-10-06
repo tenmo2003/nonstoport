@@ -5,7 +5,7 @@ import { createBackoff } from './exponential-backoff.js';
 
 export const DEFAULT_MIN_UPTIME_MS = 60_000; // a run this long counts as successful
 export const DEFAULT_RESTART_DELAY_MS = 2_000; // lets nport's DNS cleanup settle
-const STOP_SIGNALS = ['SIGINT', 'SIGTERM'];
+const STOP_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 
 /** Thrown when the nport binary cannot be started at all (never retried). */
 export class NportSpawnError extends Error {
@@ -29,10 +29,12 @@ export function logToStderr(message) {
  * Runs nport once with inherited stdio.
  * Resolves with `{ code, signal }` on exit, rejects with NportSpawnError if it cannot start.
  * `onChild` receives the child process so the caller can forward signals to it.
+ * `detached` puts the child in its own session, out of reach of the terminal's Ctrl+C and
+ * hangup; only use it when the caller forwards stop signals itself.
  */
-export function runNport(bin, args, onChild = () => {}) {
+export function runNport(bin, args, onChild = () => {}, { detached = false } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { stdio: 'inherit' });
+    const child = spawn(bin, args, { stdio: 'inherit', detached });
     child.once('error', (error) => reject(new NportSpawnError(bin, error)));
     child.once('exit', (code, signal) => resolve({ code, signal }));
     onChild(child);
@@ -44,10 +46,11 @@ function describeExit({ code, signal }) {
 }
 
 /**
- * Supervises nport until the wrapper receives SIGINT/SIGTERM.
+ * Supervises nport until the wrapper receives SIGINT/SIGTERM/SIGHUP.
  * - run lasted >= minUptimeMs: restart after restartDelayMs, backoff reset
  * - shorter run: restart after backoff.next() (retries forever)
  * - stop signal: forwarded to the child, its exit is awaited, no restart
+ * nport runs detached so a terminal Ctrl+C reaches it once (forwarded), not twice.
  * Resolves with the wrapper exit code; rejects with NportSpawnError.
  * `proc` is the signal source (injectable for tests).
  */
@@ -85,9 +88,14 @@ export async function superviseNport({
     for (let attempt = 1; !stopping; attempt++) {
       log(`starting nport (attempt ${attempt}): ${[bin, ...args].join(' ')}`);
       const startedAt = Date.now();
-      const exit = await runNport(bin, args, (spawned) => {
-        child = spawned;
-      });
+      const exit = await runNport(
+        bin,
+        args,
+        (spawned) => {
+          child = spawned;
+        },
+        { detached: true },
+      );
       child = null;
       if (stopping) break;
 

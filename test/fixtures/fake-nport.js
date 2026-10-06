@@ -4,7 +4,7 @@
 // FAKE_NPORT_PLAN, a comma-separated list with one step per start (last step repeats):
 //   fail        exit 1 immediately
 //   live:<ms>   exit 0 after <ms> (simulates the 4h expiry)
-//   hang        run until SIGINT/SIGTERM, do a short cleanup, exit 0
+//   hang        run until SIGINT/SIGTERM/SIGHUP, do a short cleanup, exit 0
 import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 
 const logFile = process.env.FAKE_NPORT_LOG;
@@ -30,6 +30,5 @@ if (step === 'fail') {
       process.exit(0);
     }, 100);
   };
-  process.once('SIGINT', () => cleanup('SIGINT'));
-  process.once('SIGTERM', () => cleanup('SIGTERM'));
+  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.once(signal, () => cleanup(signal));
 }

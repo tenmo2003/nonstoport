@@ -80,7 +80,7 @@ test('stop signal is forwarded, child cleanup is awaited, no restart', async () 
   assert.equal(await done, 0);
   assert.deepEqual(readEvents(logFile, 'cleanup'), [{ event: 'cleanup', signal: 'SIGINT' }]);
   assert.equal(starts().length, 1);
-  assert.equal(proc.listenerCount('SIGINT') + proc.listenerCount('SIGTERM'), 0);
+  assert.equal(proc.listenerCount('SIGINT') + proc.listenerCount('SIGTERM') + proc.listenerCount('SIGHUP'), 0);
 });
 
 test('stop signal cancels a pending backoff wait', async () => {
